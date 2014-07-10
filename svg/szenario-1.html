@@ -1,0 +1,91 @@
+<!doctype html>
+<html>
+<head>
+	<meta charset="utf-8" />
+	<title>Szenario #1</title>
+	<script type="text/javascript" src="lib/d3.js"></script>
+	<script type="text/javascript" src="data/s1-full.js"></script>
+	<style type="text/css">
+		svg { font-size: 14px; }
+		.foreground path { fill: none; stroke-opacity: .5; stroke-width: 1.5px; }
+		.brush .extent { fill-opacity: .3; stroke: #fff; shape-rendering: crispEdges; }
+		.setosa { stroke: #800; }
+		.axis line, .axis path { fill: none; stroke: #000; shape-rendering: crispEdges; }
+		.axis text { text-shadow: 0 1px 0 #fff; }
+	</style>
+</head>
+<body>
+	<script type="text/javascript">
+		var types = ['a'];
+		var traits = ['cvd', 'tmpd', 'o3mean'];
+
+		var margin = {
+			top: 20,
+			right: 30,
+			bottom: 20,
+			left: 30
+		};
+		var width = window.innerWidth - margin.left - margin.right;
+		var height = window.innerHeight - margin.top - margin.bottom;
+
+		var x = d3.scale.ordinal().domain(traits).rangePoints([0, width]);
+		var y = {};
+
+		var line = d3.svg.line();
+		var axis = d3.svg.axis().orient('left');
+		var foreground;
+
+		var svg = d3
+			.select('body')
+			.append('svg')
+			.attr('width', width + margin.left + margin.right)
+			.attr('height', height + margin.top + margin.bottom)
+			.append('g')
+			.attr('transform', 'translate(' + margin.left + ', ' + margin.top + ')')
+		;
+
+		traits.forEach(function(d) {
+			y[d] = d3
+				.scale
+				.linear()
+				.domain(d3.extent(data, function(x) { return x[d]; }))
+				.range([height, 0])
+			;
+		});
+
+		foreground = svg
+			.append('g')
+			.attr('class', 'foreground')
+			.selectAll('path')
+			.data(data)
+			.enter()
+			.append('path')
+			.attr('d', function(d) { return line(traits.map(function(p) { return [x(p), y[p](d[p])]; })); })
+			.attr('class', 'setosa')
+		;
+
+		var g = svg
+			.selectAll('.trait')
+			.data(traits)
+			.enter()
+			.append('g')
+			.attr('class', 'trait')
+			.attr('transform', function(d) { return 'translate(' + x(d) + ')'; })
+		;
+
+		g
+			.append('g')
+			.attr('class', 'axis')
+			.each(function(d) { d3.select(this).call(axis.scale(y[d])); })
+		;
+
+		g
+			.append('text')
+			.attr('text-anchor', 'middle')
+			.attr('y', -9)
+			.text(String)
+		;
+
+	</script>
+</body>
+</html>

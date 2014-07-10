@@ -1,0 +1,130 @@
+#!/usr/bin/env node
+
+var getopt = require('node-getopt');
+var csv = require('fast-csv');
+var fs = require('fs');
+
+var opt = new getopt([
+	['t', 'type=cvd|ohg', 'the csv type'],
+	['f', 'file=csv', 'the csv file'],
+	['c', 'cutoff=nr', 'the cutoff value'],
+	['d', 'drop=column+', 'the column to drop'],
+	['h', 'help', 'display this help']
+]);
+
+var args = opt.parseSystem();
+var type = args.options.type !== undefined ? args.options.type.toLowerCase() : 'cvd';
+type = (type === 'cvd' || type === 'ohg' ? type : 'cvd');
+
+var options = {
+	cvd: {
+		headers: true,
+		ignoreEmpty: true,
+		delimiter: ' '
+	},
+	ohg: {
+		headers: true,
+		ignoreEmpty: true,
+		delimiter: ';'
+	}
+};
+
+var data = [];
+
+if(args.options.file !== undefined) {
+	if(!fs.existsSync(args.options.file)) {
+		console.error('file does not exist.');
+		process.exit(1);
+	}
+
+	csv.fromPath(args.options.file, options[type])
+		.on('record', function(d){
+			if(type === 'cvd') {
+				d.cvd = +d.cvd;
+				d.tmpd = +d.tmpd;
+				d.o3mean = +d.o3mean;
+			}
+			else if(type === 'ohg') {
+				d.gkz = +d.gkz;
+				d.haushaltshinweis = +d.haushaltshinweis;
+				d.unterabschnitt = +d.unterabschnitt;
+				d.postengruppe = +d.postengruppe;
+				d.betrag = +d.betrag.replace(',', '.');
+				d.jahr = +d.jahr;
+			}
+
+			if(args.options.drop !== undefined) {
+				args.options.drop.forEach(function(x) {
+					delete d[x];
+				});
+			}
+
+			data.push(d);
+		})
+		.on('end', function() {
+			if(args.options.cutoff !== undefined) {
+				var cutoff = +args.options.cutoff;
+				data = data.slice(0, cutoff);
+
+				while(data.length > cutoff) {
+					delete data[Math.floor(Math.random() * (data.length + 1))];
+				}
+			}
+
+			if(args.options.type === 'ohg') {
+				var tmp = data;
+				data = {
+					'name': 'Offener Haushalt',
+					'children': []
+				};
+
+				var haushaltshinweisName = [];
+				var unterabschnittName = [];
+
+				tmp.forEach(function(entry) {
+					if(haushaltshinweisName.indexOf(entry.haushaltshinweis_name) == -1) {
+						haushaltshinweisName.push(entry.haushaltshinweis_name);
+					}
+
+					if(unterabschnittName.indexOf(entry.unterabschnitt_name) == -1) {
+						unterabschnittName.push(entry.unterabschnitt_name);
+					}
+				});
+
+				haushaltshinweisName.forEach(function(hhn) {
+					var data1 = {
+						'name': hhn,
+						'children': []
+					};
+
+					unterabschnittName.forEach(function(uan) {
+						var data2 = {
+							'name': uan,
+							'children': []
+						};
+
+						tmp.forEach(function(d) {
+							if(d.haushaltshinweis_name == hhn && d.unterabschnitt_name == uan) {
+								data2.children.push({
+									'name': d.postengruppe_name,
+									'size': Math.round(+d.betrag)
+								});
+							}
+						});
+
+						data1.children.push(data2);
+					});
+
+					data.children.push(data1);
+				});
+			}
+			
+			console.log('var data = ' + JSON.stringify(data) + ';');
+		})
+	;
+}
+else {
+	opt.showHelp();
+	process.exit(1);
+}
+

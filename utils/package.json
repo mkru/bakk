@@ -1,0 +1,12 @@
+{
+  "name": "bakk.utils",
+  "author": "Matthias Krug <matthias.krug@student.tuwien.ac.at>",
+  "version": "1.0.0",
+  "private": true,
+  "description": "utilities for bachelor thesis",
+  "dependencies": {
+    "fast-csv": "^0.4.1",
+    "node": "^0.10.29",
+    "node-getopt": "^0.2.3"
+  }
+}

@@ -1,0 +1,131 @@
+<!doctype html>
+<html>
+<head>
+	<meta charset="utf-8" />
+	<title>Szenario #3</title>
+	<script type="text/javascript" src="lib/d3.js"></script>
+	<script type="text/javascript" src="data/s3-3years.js"></script>
+	<style type="text/css">
+		html, body { margin: 0; padding: 0; }
+		.part { stroke: #9e3c2f; }
+		.part-1987 { fill: #d84c35; }
+		.part-1988 { fill: #e48831; }
+		.part-1989 { fill: #e8b830; }
+	</style>
+</head>
+<body>
+	<script type="text/javascript">
+		/*var data2 = data;
+		data = [];
+		for(var i = 0; i < data2.length; i++) {
+			var tmp = [];
+			for(var j = 0; j < data2[i].value.length; j++) {
+				tmp.push(data2[i].value[j].value);
+			}
+			tmp.sort();
+			data.push(tmp);
+		}*/
+
+		var k = ['Jänner', 'Febraur', 'März', 'April', 'Mai', 'Juni', 'Juli', 'August', 'September', 'Oktober', 'November', 'Dezember'];
+
+		for(var i = 0; i < data.length; i++) {
+			data[i].value.sort(function(a, b) {
+				return a.value - b.value;
+			});
+			var from = 0;
+			for(var j = 0; j < data[i].value.length; j++) {
+				data[i].value[j].segment = i;
+				data[i].value[j].from = from;
+				data[i].value[j].to = data[i].value[j].value;
+				from = data[i].value[j].value;
+			}
+		}
+		
+		var margin = 20;
+		var length = (window.innerWidth < window.innerHeight ? window.innerWidth : window.innerHeight) - 2 * margin;
+		var center = length / 2;
+		var position = {
+			top: (window.innerHeight - length) / 2,
+			left: (window.innerWidth - length) / 2
+		};
+
+		var maximumValue = 0;
+		for(var a = 0; a < data.length; a++) {
+			for(var b = 0; b < data[a].value.length; b++) {
+				if(data[a].value[b].value > maximumValue) {
+					maximumValue = data[a].value[b].value;
+				}
+			}
+		}
+
+		var radius = d3.scale.linear().domain([0, maximumValue]).range([0, length / 2]);
+		var segmentWidth = (Math.PI * 2) / data.length;
+
+		var svg = d3
+			.select('body')
+			.append('svg')
+			.attr('width', window.innerWidth)
+			.attr('height', window.innerHeight)
+		;
+
+		var body = svg
+			.append('g')
+			.attr('id', 'body')
+			.attr('width', length)
+			.attr('height', length)
+			.attr('transform', 'translate(' + (position.left + center) + ', ' + (position.top + center) + ')')
+		;
+
+		var arc = d3.svg.arc()
+			.startAngle(function(d) { return (segmentWidth * d.segment); })
+			.endAngle(function(d) { return (segmentWidth * (d.segment + 1)); })
+			.innerRadius(function(d) { return radius(d.from); })
+			.outerRadius(function(d) { return radius(d.to); });
+
+		var paths = body
+			.append('g')
+			.attr('class', 'segs')
+			.selectAll('.seg')
+			.data(data)
+			.enter()
+			.append('g')
+			.attr('class', 'seg')
+			.selectAll('.seg g')
+			.data(function(d) { return d.value; })
+			.enter()
+			.append('path')
+			.attr('class', function(d) { return 'part part-' + d.year; })
+			.attr('d', function(d) { return arc(d); })
+		;
+
+		var ticks = body
+			.append('g')
+			.attr('class', 'ticks')
+			.selectAll('.line-ticks')
+			.data(k)
+			.enter()
+			.append('g')
+			.attr('transform', function (d, i) {
+			    return 'rotate(' + ((i / k.length * 360) - 90) + ')translate(' + radius(maximumValue) + ')';
+			})
+			.attr('class', 'line-ticks');
+		;
+
+		ticks
+			.append('line')
+			.attr('x2', -1 * radius(maximumValue))
+			.style('stroke', 'black')
+			.style('opacity', 0.75)
+			.style('fill', 'none')
+		;
+
+		ticks
+			.append('text')
+			.text(function(d,i){ return k[i]; })
+			.attr('text-anchor', 'middle')
+			.attr('y', '12')
+			.attr('x', '-25')
+		;
+	</script>
+</body>
+</html>

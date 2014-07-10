@@ -1,0 +1,10 @@
+./csv2json.js -s 1 -t svg > ../svg/data/s1-full.js
+./csv2json.js -s 1 -t svg -c 1000 > ../svg/data/s1-1000.js
+./csv2json.js -s 1 -t svg -c 500 > ../svg/data/s1-500.js
+
+./csv2json.js -s 2 -t svg > ../svg/data/s2-full.js
+./csv2json.js -s 2 -t svg -c 1000 > ../svg/data/s2-1000.js
+./csv2json.js -s 2 -t svg -c 500 > ../svg/data/s2-500.js
+
+./csv2json.js -s 3 -t svg -c 3 > ../svg/data/s3-3years.js
+./csv2json.js -s 3 -t svg -c 1 > ../svg/data/s3-1year.js
