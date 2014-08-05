@@ -1,0 +1,164 @@
+<!doctype html>
+<html>
+<head>
+	<meta charset="utf-8" />
+	<title>Szenario #1</title>
+	<script type="text/javascript" src="lib/processing.js"></script>
+	<script type="text/javascript" src="data/s1-500.js"></script>
+	<style type="text/css">
+		body { margin: 10px; }
+	</style>
+</head>
+<body>
+	<script type="text/processing" data-processing-target="the_canvas">
+		ArrayList data = new ArrayList();
+
+		int width, height;
+		int x1, x2, y1, y2;
+
+		int numCols = 3;
+		float[] colMin = { 999999, 999999, 999999 };
+		float[] colMax = { 0, 0, 0 };
+		String[] colNames = { 'cvd', 'tmpd', 'o3mean' };
+
+		int axisDifference;
+
+		void setup() {
+			noLoop();			
+			background(255, 255, 255);
+			smooth();
+		}
+
+		void draw() {
+			if(data.size() > 0) {
+				size(width, height);
+				
+				x1 = 30;
+				x2 = width - 30;
+				y1 = 30;
+				y2 = height - 30;
+				axisDifference = floor((x2 - x1) / (numCols - 1));
+
+				drawAxis();
+				drawLines();
+			}
+		}
+
+		void addData(float _cvd, float _tmpd, float _o3mean) {
+			data.add(new DataEntry(_cvd, _tmpd, _o3mean));
+
+			if(_cvd > colMax[0]) { colMax[0] = _cvd; }
+			if(_cvd < colMin[0]) { colMin[0] = _cvd; }
+
+			if(_tmpd > colMax[1]) { colMax[1] = _tmpd; }
+			if(_tmpd < colMin[1]) { colMin[1] = _tmpd; }
+
+			if(_o3mean > colMax[2]) { colMax[2] = _o3mean; }
+			if(_o3mean < colMin[2]) { colMin[2] = _o3mean; }
+		}
+
+		void setSize(int _width, int _height) {
+			width = _width;
+			height = _height;
+		}
+
+		void start() {
+			redraw();
+		}
+
+		void drawLines() {
+			stroke(#800000);
+
+			for(int i = 0; i < data.size(); i++) {
+
+				float _x1 = x1;
+				float _y1 = a2b(0, data.get(i).cvd);
+
+				float _x2 = x1 + axisDifference;
+				float _y2 = a2b(1, data.get(i).tmpd);
+
+				float _x3 = x1 + axisDifference * 2;
+				float _y3 = a2b(2, data.get(i).o3mean);
+
+				line(_x1, _y1, _x2, _y2);
+				line(_x2, _y2, _x3, _y3);
+			}
+		}
+
+		void drawAxis() {
+			int xpos = x1;
+			for(int i = 0; i < numCols; i++) {
+				line(xpos, y1, xpos, y2);
+
+				fill(#000000);
+				textAlign(CENTER);
+
+				text(colNames[i], xpos, y1 - 10);
+
+				float ymin = a2b(i, colMin[i]);
+				float ymax = a2b(i, colMax[i]);
+
+				if(i == numCols - 1) {
+					textAlign(RIGHT);
+
+					text(colMin[i], xpos - 10, ymin + 5);
+					line(xpos - 5, ymin, xpos + 5, ymin);
+
+					text(colMax[i], xpos - 10, ymax + 5);
+					line(xpos - 5, ymax, xpos + 5, ymax);
+				}
+				else {
+					textAlign(LEFT);
+
+					text(colMin[i], xpos + 10, ymin + 5);
+					line(xpos - 5, ymin, xpos + 5, ymin);
+
+					text(colMax[i], xpos + 10, ymax + 5);
+					line(xpos - 5, ymax, xpos + 5, ymax);
+				}
+
+				xpos += axisDifference;
+			}
+		}
+
+		float a2b(int col, int value) {
+			// http://stackoverflow.com/questions/929103/convert-a-number-range-to-another-range-maintaining-ratio
+
+			// low to high
+			// return (((value - colMin[col]) * (y2 - y1)) / (colMax[col] - colMin[col])) + y1;
+
+			// high to low
+			return (((value - colMin[col]) * (y1 - y2)) / (colMax[col] - colMin[col])) + y2;
+		}
+
+		class DataEntry {
+			float cvd, tmpd, o3mean;
+
+			DataEntry(float _cvd, float _tmpd, float _o3mean) {
+				cvd = _cvd;
+				tmpd = _tmpd;
+				o3mean = _o3mean;
+			}
+
+			void debug() {
+				println(
+					'cvd: ' + cvd + ' // ' +
+					'tmpd: ' + tmpd + ' // ' +
+					'o3mean: ' + o3mean
+				);
+			}
+		}
+	</script>
+	<canvas id="the_canvas"></canvas>
+	<script type="text/javascript">
+		window.onload = function() {
+			var p = Processing.getInstanceById('the_canvas');
+			p.setSize(document.documentElement.clientWidth - 20, document.documentElement.clientHeight - 30);
+			data.forEach(function(d) {
+				p.addData(d.cvd, d.tmpd, d.o3mean);
+			});
+			p.start();
+		}
+	</script>
+</body>
+</html>

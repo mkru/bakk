@@ -6,7 +6,6 @@
   "description": "utilities for bachelor thesis",
   "dependencies": {
     "fast-csv": "^0.4.1",
-    "node": "^0.10.29",
     "node-getopt": "^0.2.3"
   }
 }

@@ -1,0 +1,6 @@
+./csv2json.js -s 1 -t canvas > ../canvas/data/s1-full.js
+./csv2json.js -s 1 -t canvas -c 1000 > ../canvas/data/s1-1000.js
+./csv2json.js -s 1 -t canvas -c 500 > ../canvas/data/s1-500.js
+
+./csv2json.js -s 3 -t canvas -c 3 > ../canvas/data/s3-3years.js
+./csv2json.js -s 3 -t canvas -c 1 > ../canvas/data/s3-1year.js

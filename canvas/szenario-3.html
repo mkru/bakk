@@ -1,0 +1,226 @@
+<!doctype html>
+<html>
+<head>
+	<meta charset="utf-8" />
+	<title>Szenario #3</title>
+	<script type="text/javascript" src="lib/processing.js"></script>
+	<script type="text/javascript" src="data/s3-3years.js"></script>
+	<style type="text/css">
+		body { margin: 10px; }
+	</style>
+</head>
+<body>
+	<script type="text/processing" data-processing-target="the_canvas">
+		ArrayList data = new ArrayList();
+
+		int width, height;
+		int x1, x2, y1, y2;
+		Point center;
+		float angle;
+		int maxRadius;
+		float maxValue = 0;
+
+		String[] monthNames = { 'Jänner', 'Februar', 'März', 'April', 'Mai', 'Juni', 'Juli', 'August', 'September', 'Oktober', 'November', 'Dezember' };
+
+		void setup() {
+			noLoop();			
+			background(255, 255, 255);
+			smooth();
+		}
+
+		void draw() {
+			if(data.size() > 0) {
+				size(width, height);
+				
+				x1 = 30;
+				x2 = width - 30;
+				y1 = 30;
+				y2 = height - 30;
+
+				center = new Point(((x2 - x1) / 2) + x1, ((y2 - y1) / 2) + y1);
+				angle = PI * 2 / data.size();
+
+				if(width > height) {
+					maxRadius = (height - 60) / 2;
+				}
+				else {
+					maxRadius = (width - 60) / 2;
+				}
+
+				drawSections();
+				drawAxis();
+			}
+		}
+
+		void drawSections() {
+			stroke(#9e3c2f);
+			for(int i = 0; i < data.size(); i++) {
+				ArrayList sorted = sortByValue(data.get(i).sections);
+
+				for(int j = 0; j < sorted.size(); j++) {
+					fill(year2color(sorted.get(j).year));
+
+					float size = value2radius(sorted.get(j).value) * 2;
+					arc(center.x, center.y, size, size, angle * i, angle * (i + 1));
+				}
+			}
+		}
+
+		void drawAxis() {
+			stroke(#000000);
+			for(int i = 0; i < data.size(); i++) {
+				Point p = getAxisPoint(i * angle, maxRadius);
+
+				line(center.x, center.y, p.x, p.y);
+
+				pushMatrix();
+
+				fill(#000000);
+				textAlign(RIGHT);
+				translate(p.x, p.y);
+				rotate(i * angle);
+				text(monthNames[data.get(i).month - 1], 0, 15);
+
+				popMatrix();
+			}
+		}
+
+		Point getAxisPoint(float _angle, int _radius) {
+			return new Point(center.x + cos(_angle) * _radius, center.y + sin(_angle) * _radius);
+		}
+
+		float value2radius(float _value) {
+			return map(_value, 0, maxValue, 0, maxRadius);
+		}
+
+		color year2color(int _year) {
+			switch(_year) {
+				case 1987:
+					return #d84c35;
+					break;
+				case 1988:
+					return #e48831;
+					break;
+				case 1989:
+					return #e8b830;
+					break;
+				default:
+					return #000000;
+			}
+		}
+
+		void setSize(int _width, int _height) {
+			width = _width;
+			height = _height;
+		}
+
+		void start() {
+			redraw();
+		}
+
+		void addMonth(Month _month) {
+			data.add(_month);
+		}
+
+		Month createMonth(int _month) {
+			return new Month(_month);
+		}
+
+		ArrayList sortByValue(ArrayList _list) {
+			ArrayList l = _list.clone();
+			ArrayList n = new ArrayList();
+
+
+			while(l.size() > 0) {
+				int idx = -1;
+				float value = -999999;
+
+				for(int i = 0; i < l.size(); i++) {
+					if(idx == -1 || l.get(i).value > value) {
+						idx = i;
+						value = l.get(i).value;
+					}
+				}
+
+				n.add(l.remove(idx));
+			}
+
+			return n;
+		}
+
+		class Point {
+			float x, y;
+
+			Point(float _x, float _y) {
+				x = _x;
+				y = _y;
+			}
+
+			void debug() {
+				println(
+					'x: ' + x +
+					' // ' + 
+					'y: ' + y
+				);
+			}
+		}
+
+		class Month {
+			ArrayList sections;
+			int month;
+
+			Month(_month) {
+				month = _month;
+				sections = new ArrayList();
+			}
+
+			void addSection(int _year, float _value) {
+				if(maxValue < _value) {
+					maxValue = _value;
+				}
+				sections.add(new Section(_year, month, _value));
+			}
+		}
+
+		class Section {
+			int year, month;
+			float value;
+
+			Section(int _year, int _month, float _value) {
+				year = _year;
+				month = _month;
+				value = _value;
+			}
+
+			void debug() {
+				println(
+					'year: ' + year +
+					' // ' + 
+					'month: ' + month +
+					' // ' + 
+					'value: ' + value
+				);
+			}
+		}
+	</script>
+	<canvas id="the_canvas"></canvas>
+	<script type="text/javascript">
+		window.onload = function() {
+			var p = Processing.getInstanceById('the_canvas');
+			p.setSize(document.documentElement.clientWidth - 20, document.documentElement.clientHeight - 30);
+			
+			data.forEach(function(months) {
+				var m = p.createMonth(months.month);
+
+				months.value.forEach(function(section) {
+					m.addSection(+section.year, section.value);
+				});
+
+				p.addMonth(m);
+			});
+
+			p.start();
+		}
+	</script>
+</body>
+</html>
